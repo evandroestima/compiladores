@@ -1,11 +1,13 @@
 %{
 #include <string.h>
+#include <limits.h>
 #include "util.h"
 #include "tokens.h"
 #include "errormsg.h"
 
+#define MAX_STR_CONST 16384
+
 int charPos=1;
-int nesting = 0;
 int lexcol = 0; 
 int lexline = 1; 
 int commentLevel=0; 
@@ -26,14 +28,14 @@ void adjust(void)
  charPos+=yyleng;
 }
 
-extern YYLTYPE yylloc; 
+extern YYSTYPE yylloc; 
 
 %}
 
+%s comment
+%s in_string 
 
 %%
-%x str comment;
-%x in_string; 
 
 
 \" {BEGIN(in_string);
@@ -42,101 +44,105 @@ extern YYLTYPE yylloc;
     adjust();
 }
 
-<in_string> {
-    \" {
-        char * p;
+<in_string> 
+{
+\" {
+   char * p;
+   BEGIN(INITIAL);
+   *string_buf_ptr = '\0';
 
-        BEGIN(INITIAL);
-        *string_buf_ptr = '\0';
-
-        p = malloc ((strlen(string_buf) +1) *sizeof(char));
-        strcpy(p, string_buf);
-        yyval.u_string = p;
-        adjust();
-        return STRINGLIT;
-    }
+   p = malloc ((strlen(string_buf) +1) *sizeof(char));
+   strcpy(p, string_buf);
+   yylval.sval = p;
+   adjust();
+   return STRING;
+   }
+       
 \n {
-    adjust() yyerror ("constante string não encerrada");
-}
+    	adjust();
+        perror ("constante string não encerrada");
+       }
 
 <<EOF>> {
-    adjust() yyerror ("constante string não encerrada");
-}
+             adjust();
+             perror ("constante string não encerrada");
+    }
 
 \\n {*string_buf_ptr++ = '\n';}
 \\t {*string_buf_ptr++ = '\t';}
 \\\" {*string_buf_ptr++ = '"';}
 \\\\ {*string_buf_ptr++ = '\\';}
-\\^[a-z]{
-    if (strchr ("abcdefghijklmnopqrstuvwxyz", yytext[2])){
-        *string_buf_ptr = (yytext[2] - 'a' +1);
-    }
-    else {
-        yyerror("sequência de escape ilegal");
-    }
-}
-
-\\{digit}{3} {
-    int i = atoi(&yytext[1]);
-    if (i > 255)
-        yyerror("sequência de escape ilegal");
     
-    *string_buf_ptr++ = (char)i;
-}
+\\^[a-z] {
+    		if (strchr ("abcdefghijklmnopqrstuvwxyz", yytext[2])){
+        		*string_buf_ptr = (yytext[2] - 'a' +1);
+    		}
+    		else {
+        		perror("sequência de escape ilegal");
+    		}
+	     }
+
+\\[0-9]{3} {
+    		int i = atoi(&yytext[1]);
+    		if (i > 255)
+    		    perror("sequência de escape ilegal");
+    
+    		*string_buf_ptr++ = (char)i;
+		 }
 
 \\[\n\t]+\\ {
-    /* faz nada */
-}
+        /* faz nada */
+    }
 
 \\. {
-    adjust();
-    yyerror("sequência de escape ilegal");
-}
+        adjust();
+        perror("sequência de escape ilegal");
+    }
 
 
 [^\\\n\"]+ {
-    char * p = yytext; 
+        char * p = yytext; 
 
-    while (*p)
-        *string_buf_ptr++ = *p++;
+        while (*p)
+            *string_buf_ptr++ = *p++;
+    }
 }
-}
 
 
-<*>"/*" {adjust(); ++commentLevel; BEGIN(comment);}
+"/*" {adjust(); ++commentLevel; BEGIN(comment);}
 
 <comment>{
-  \n    {adjust(); EM_newline();}
+  \n    {adjust();}
   "*/"  {adjust(); --commentLevel; if (commentLevel <= 0) BEGIN(INITIAL);}
-  <<EOF>> {adjust(); yyerror("comentário não encerrado"); }
+  <<EOF>> {adjust(); perror("comentário não encerrado"); }
   .     {adjust();}
 }
 
 [ \t]+ {adjust();}
-"array" {adjust(); return Parser::ARRAY;}
-"if" {adjust(); return Parser::IF;}
-"then" {adjust(); return Parser::THEN;}
-"else" {adjust(); return Parser::ELSE;}
-"while" {adjust(); return Parser::WHILE;}
-"for" {adjust(); return Parser::FOR;}
-"to" {adjust(); return Parser::TO;}
-"do" {adjust(); return Parser::DO;}
-"let" {adjust(); return Parser::LET;}
-"in" {adjust(); return Parser::IN;}
-"end" {adjust(); return Parser::END;}
-"of" {adjust(); return Parser::OF;}
-"break" {adjust(); return Parser::BREAK;}
-"nil" {adjust(); return Parser::NIL;}
-"function" {adjust(); return Parser::FUNCTION;}
-"var" {adjust(); return Parser::VAR;}
-"type" {adjust(); return Parser::TYPE;}
+"array" {adjust(); return ARRAY;}
+"if" {adjust(); return IF;}
+"then" {adjust(); return THEN;}
+"else" {adjust(); return ELSE;}
+"while" {adjust(); return WHILE;}
+"for" {adjust(); return FOR;}
+"to" {adjust(); return TO;}
+"do" {adjust(); return DO;}
+"let" {adjust(); return LET;}
+"in" {adjust(); return IN;}
+"end" {adjust(); return END;}
+"of" {adjust(); return OF;}
+"break" {adjust(); return BREAK;}
+"nil" {adjust(); return NIL;}
+"function" {adjust(); return FUNCTION;}
+"var" {adjust(); return VAR;}
+"type" {adjust(); return TYPE;}
 
 
 
 " "	 {adjust(); continue;}
-for  	 {adjust(); return FOR;}
+"for"   {adjust(); return FOR;}
 
-{integer} {
+[0-9]+ {
     char * buf = (char *) malloc(20);
     long int value; 
     
@@ -145,17 +151,17 @@ for  	 {adjust(); return FOR;}
     value = strtol (yytext, &buf, 10);
 
     if (value = LONG_MAX || value > INT_MAX){
-        yyerror("inteiro inválido");
+        perror("inteiro inválido");
         exit(1);
     }
-    yylval.u_integer = int(value);
+    yylval.ival = value;
     return INTLIT;
 }
 
-{identifier} {
-    char * buf (char *) malloc ((yyleng + 1) * sizeof(char));
+[a-zA-Z][0-9a-zA-Z]* {
+    char * buf = (char *) malloc ((yyleng + 1) * sizeof(char));
     strcpy(buf, yytext);
-    yylval.u_ident = buf;
+    yylval.sval = buf;
 
     adjust();
     return IDENT; 
@@ -193,5 +199,5 @@ for  	 {adjust(); return FOR;}
   "&"   {adjust(); return AND;}
   "|"   {adjust(); return OR;}
   ":="  {adjust(); return ASSIGN;}
-  
-  "."  {adjust(); return ERROR;}
+ 
+%%
