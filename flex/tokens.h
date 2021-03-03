@@ -48,5 +48,3 @@ extern YYSTYPE yylval;
 # define FUNCTION 297
 # define VAR 298
 # define TYPE 299
-# define INTLIT 300
-# define IDENT 301
