@@ -11,6 +11,8 @@ typedef struct arvore {
 extern Arvore arv;
 
 
+
+
 typedef struct intt {
 	struct no no;
 	int valor;
@@ -25,7 +27,12 @@ typedef struct opbin{
 	No *dir;
 }NoOpBin;
 
+typedef struct sstring {
+	char *s;
+}NoString;
+
 NoInt* no_intC (int in);
 NoOpBin* no_opBinC (enum op tipo, No *esq, No *dir);
 
+NoString* no_stringC (char *in);
 

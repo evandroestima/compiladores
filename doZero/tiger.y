@@ -56,9 +56,9 @@ exp:              INT                       	{$$ = no_intC($1);}
                 | exp LE exp						{}
                 | exp GE exp						{}
                 | exp PLUS exp		{$$ = no_opBinC(SOMA, $1, $3);}
-                | exp MINUS exp						{}
-                | exp TIMES exp						{}
-                | exp DIVIDE exp					{}
+                | exp MINUS exp		{$$ = no_opBinC(SUBT, $1, $3);}
+                | exp TIMES exp		{$$ = no_opBinC(MULT, $1, $3);}
+                | exp DIVIDE exp		{$$ = no_opBinC(DIV, $1, $3);}
                 | MINUS exp %prec UMINUS			{}
                 | exp EQ exp						{}
                 | exp NEQ exp						{}
