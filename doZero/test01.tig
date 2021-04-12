@@ -1,13 +1,1 @@
-let 
-
-var a := 42
-
-function foo(a:int, b:string) = ident{}
-
-type a = b
-type nome = {a:int, b:int, c:string}
-type arr = array of int
-
-var vet := arr[12] of 1234
-
-in end
+2 + 3

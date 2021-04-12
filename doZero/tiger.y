@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "ast.h"
 
 int yylex(void); /* function prototype */
 void yyerror(char *s, ...);
@@ -12,16 +13,18 @@ void yyerror(char *s, ...);
 %union {
   int ival;
   char *sval;
-  
+  struct no *no;
 }
 
-%token ID STRING
-%token INT
+%token <sval> ID STRING
+%token <ival> INT
 
 %token
   COMMA COLON SEMICOLON LPAREN RPAREN LBRACK RBRACK LBRACE RBRACE DOT
   PLUS MINUS TIMES DIVIDE EQ NEQ LT LE GT GE AND OR ASSIGN
   ARRAY IF THEN ELSE WHILE FOR TO DO LET IN END OF BREAK NIL FUNCTION VAR TYPE
+
+%type <no> exp
 
 %nonassoc LOW
 %nonassoc THEN DO TYPE FUNCTION ID
@@ -33,17 +36,12 @@ void yyerror(char *s, ...);
 %left TIMES DIVIDE
 %left UMINUS
 
-%start prog
-
 %%
 
-prog:             root                              {}
-                ;
+root:           /* empty */                   {printf("\n Programa vazio");}
+                | exp				{arv.ini = $1;}
 
-root:           /* empty */                         {}
-                | exp								{}
-
-exp:              INT                       		{}
+exp:              INT                       	{$$ = no_intC($1);}
                 | STRING							{}
                 | NIL								{}
                 | lvalue							{}
@@ -57,7 +55,7 @@ exp:              INT                       		{}
                 | exp GT exp						{}
                 | exp LE exp						{}
                 | exp GE exp						{}
-                | exp PLUS exp						{}
+                | exp PLUS exp		{$$ = no_opBinC(SOMA, $1, $3);}
                 | exp MINUS exp						{}
                 | exp TIMES exp						{}
                 | exp DIVIDE exp					{}

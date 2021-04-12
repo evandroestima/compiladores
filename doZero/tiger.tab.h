@@ -101,11 +101,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 12 "tiger.y"
+#line 13 "tiger.y"
 
   int ival;
   char *sval;
-  
+  struct no *no;
 
 #line 111 "tiger.tab.h"
 
