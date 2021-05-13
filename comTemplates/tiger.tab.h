@@ -101,13 +101,55 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 13 "tiger.y"
+#line 20 "tiger.y"
 
+      // Lists.
+    /*
+    struct A_decList_ *decs;
+    struct A_expList_ *exprs;
+    struct A_efieldList_ *records;
+    struct A_nametyList_ *namety;
+*/
+    // Declarations.
+    struct A_var_ *A_var;
+    struct A_exp_ *A_exp;
+    struct A_dec_ *A_dec;
+    struct A_ty_ *A_ty;
+    /*
+    struct A_dec_ *dec;
+    struct A_dec_ *ty;
+    struct A_dec_ *tyfield;
+	*/
+    // Expressions.
+    struct A_decList_ *A_decList;
+    struct A_expList_ *A_expList;
+    struct A_field_ *A_field;
+    struct A_fieldList_ *A_fieldList;
+    struct A_fundec_ *A_fundec;
+    struct A_fundecList_ *A_fundecList;
+    struct A_namety_ *A_namety;
+    struct A_nametyList_ *A_nametyList;
+    struct A_efield_ *A_efield;
+    struct A_efieldList_ *A_efieldList;
+    /*
+    struct A_exp_ *assign;
+    struct A_exp_ *funcall;
+    struct A_exp_ *recordcreation;
+    struct A_exp_ *recordargs;
+    struct A_exp_ *arraycreation;
+    struct A_exp_ *conditional;
+    struct A_exp_ *whilee;
+    struct A_exp_ *forr;
+	*/
+    // Lvalues.
+    struct A_var_ *lval;
+
+    // Primitive types.
   int ival;
   char *sval;
-  struct no *no;
+  struct A_exp_ **node;
 
-#line 111 "tiger.tab.h"
+#line 153 "tiger.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

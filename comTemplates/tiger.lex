@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "tiger.tab.h"
+#include "ast.h"
 
 #define BUFFSIZE 255
 
@@ -25,45 +26,45 @@ identifier {alpha}("_"|{alpha}|{digit})*
 
 "type" { return TYPE; }
 "array" { return ARRAY; }
-"of" {return OF; }
-"var" {return VAR; }
-"function" {return FUNCTION; }
-"nil" {return NIL; }
-"if" {return IF; }
-"then" {return THEN; }
-"else" {return ELSE; }
-"while" {return WHILE; }
-"for" {return FOR; }
-"to" {return TO; }
-"do" {return DO; }
-"break" {return BREAK; }
-"let" {return LET; }
-"in" {return IN; }
-"end" {return END; }
+"of" { return OF; }
+"var" { return VAR; }
+"function" { return FUNCTION; }
+"nil" { return NIL; }
+"if" { return IF; }
+"then" { return THEN; }
+"else" { return ELSE; }
+"while" { return WHILE; }
+"for" { return FOR; }
+"to" { return TO; }
+"do" { return DO; }
+"break" { return BREAK; }
+"let" { return LET; }
+"in" { return IN; }
+"end" { return END; }
 
-"," {return COMMA; }
-":" {return COLON; }
-";" {return SEMICOLON; }
-"(" {return LPAREN; }
-")" {return RPAREN; }
-"[" {return LBRACK; }
-"]" {return RBRACK; }
-"{" {return LBRACE; }
-"}" {return RBRACE; }
-"." {return DOT; }
-"+" {return PLUS; }
-"-" {return MINUS; }
-"*" {return TIMES; }
-"/" {return DIVIDE; }
-"=" {return EQ; }
-"<>" {return NEQ; }
-"<" {return LT; }
-">" {return GT; }
-"<=" {return LE; }
-">=" {return GE; }
-":=" {return ASSIGN; }
-"&" {return AND; }
-"|" {return OR; }
+"," { return COMMA; }
+":" { return COLON; }
+";" { return SEMICOLON; }
+"(" { return LPAREN; }
+")" { return RPAREN; }
+"[" { return LBRACK; }
+"]" { return RBRACK; }
+"{" { return LBRACE; }
+"}" { return RBRACE; }
+"." { return DOT; }
+"+" { return PLUS; }
+"-" { return MINUS; }
+"*" { return TIMES; }
+"/" { return DIVIDE; }
+"=" { return EQ; }
+"<>" { return NEQ; }
+"<" { return LT; }
+">" { return GT; }
+"<=" { return LE; }
+">=" { return GE; }
+":=" { return ASSIGN; }
+"&" { return AND; }
+"|" { return OR; }
 [ \t] { }
 "\n" { yycolumn = 1; ++yyline; }
 
@@ -132,7 +133,7 @@ identifier {alpha}("_"|{alpha}|{digit})*
     BEGIN INITIAL;
     buffer[buffer_len] = '\0';
     yylval.sval = strdup(buffer);
-    return STRING;
+    return 259; // return STRING
 }
 <STRING>. {
     if (buffer_len < BUFFSIZE) {
@@ -144,10 +145,11 @@ identifier {alpha}("_"|{alpha}|{digit})*
     }
 }
 
+
 "/*" { ++comment_level; BEGIN COMMENT; }
 <COMMENT>"/*" { ++comment_level; }
 <COMMENT>"*/" { if (--comment_level == 0) { BEGIN INITIAL; } }
-<COMMENT><<EOF>> {
+<COMMENT><<EOF>> {;
     fprintf(stderr, "[ERRO LEXICO - %d:%d] Comentario nao terminado.\n",
             yylloc.first_line, yylloc.first_column);
     exit(1);

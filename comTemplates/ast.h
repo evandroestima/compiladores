@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdbool.h>
+#include "symbol.h"
+
 /*
  * ast.h - Abstract Syntax Header (Chapter 4)
  *
@@ -8,6 +11,8 @@
  */
 
 /* Type Definitions */
+
+typedef char* string;
 
 typedef int A_pos;
 
@@ -59,7 +64,7 @@ struct A_exp_
 	      struct {A_exp test, body;} whilee;
 	      struct {S_symbol var; A_exp lo,hi,body; bool escape;} forr;
 	      /* breakk; - need only the pos */
-	      struct {A_decList decs; A_exp body;} let;
+	      struct {A_decList decs; A_expList body;} let;
 	      struct {S_symbol typ; A_exp size, init;} array;
 	    } u;
      };
@@ -112,7 +117,7 @@ A_var A_SubscriptVar(A_pos pos, A_var var, A_exp exp);
 A_exp A_VarExp(A_pos pos, A_var var);
 A_exp A_NilExp(A_pos pos);
 A_exp A_IntExp(A_pos pos, int i);
-A_exp A_StringExp(A_pos pos, string s);
+A_exp A_StringExp(A_pos pos, char* s);
 A_exp A_CallExp(A_pos pos, S_symbol func, A_expList args);
 A_exp A_OpExp(A_pos pos, A_oper oper, A_exp left, A_exp right);
 A_exp A_RecordExp(A_pos pos, S_symbol typ, A_efieldList fields);
@@ -122,7 +127,7 @@ A_exp A_IfExp(A_pos pos, A_exp test, A_exp then, A_exp elsee);
 A_exp A_WhileExp(A_pos pos, A_exp test, A_exp body);
 A_exp A_ForExp(A_pos pos, S_symbol var, A_exp lo, A_exp hi, A_exp body);
 A_exp A_BreakExp(A_pos pos);
-A_exp A_LetExp(A_pos pos, A_decList decs, A_exp body);
+A_exp A_LetExp(A_pos pos, A_decList decs, A_expList body);
 A_exp A_ArrayExp(A_pos pos, S_symbol typ, A_exp size, A_exp init);
 A_dec A_FunctionDec(A_pos pos, A_fundecList function);
 A_dec A_VarDec(A_pos pos, S_symbol var, S_symbol typ, A_exp init);

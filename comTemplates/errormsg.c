@@ -7,13 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include "util.h"
 #include "errormsg.h"
 
 
 bool anyErrors= FALSE;
 
-static string fileName = "";
+static char* fileName = "";
 
 static int lineNum = 1;
 
@@ -55,7 +56,7 @@ void EM_error(int pos, char *message,...)
 
 }
 
-void EM_reset(string fname)
+void EM_reset(char *fname)
 {
  anyErrors=FALSE; fileName=fname; lineNum=1;
  linePos=intList(0,NULL);

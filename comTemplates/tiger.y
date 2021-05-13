@@ -18,9 +18,51 @@ void yyerror(char *s)
 
 %locations
 %union {
+      // Lists.
+    /*
+    struct A_decList_ *decs;
+    struct A_expList_ *exprs;
+    struct A_efieldList_ *records;
+    struct A_nametyList_ *namety;
+*/
+    // Declarations.
+    struct A_var_ *A_var;
+    struct A_exp_ *A_exp;
+    struct A_dec_ *A_dec;
+    struct A_ty_ *A_ty;
+    /*
+    struct A_dec_ *dec;
+    struct A_dec_ *ty;
+    struct A_dec_ *tyfield;
+	*/
+    // Expressions.
+    struct A_decList_ *A_decList;
+    struct A_expList_ *A_expList;
+    struct A_field_ *A_field;
+    struct A_fieldList_ *A_fieldList;
+    struct A_fundec_ *A_fundec;
+    struct A_fundecList_ *A_fundecList;
+    struct A_namety_ *A_namety;
+    struct A_nametyList_ *A_nametyList;
+    struct A_efield_ *A_efield;
+    struct A_efieldList_ *A_efieldList;
+    /*
+    struct A_exp_ *assign;
+    struct A_exp_ *funcall;
+    struct A_exp_ *recordcreation;
+    struct A_exp_ *recordargs;
+    struct A_exp_ *arraycreation;
+    struct A_exp_ *conditional;
+    struct A_exp_ *whilee;
+    struct A_exp_ *forr;
+	*/
+    // Lvalues.
+    struct A_var_ *lval;
+
+    // Primitive types.
   int ival;
   char *sval;
-  struct no *no;
+  struct A_exp_ **node;
 }
 
 %token <sval> ID STRING
@@ -31,7 +73,27 @@ void yyerror(char *s)
   PLUS MINUS TIMES DIVIDE EQ NEQ LT LE GT GE AND OR ASSIGN
   ARRAY IF THEN ELSE WHILE FOR TO DO LET IN END OF BREAK NIL FUNCTION VAR TYPE
 
-%type <no> exp
+%type   <root>          root
+%type   <A_exp>     	 exp
+%type   <A_efieldList>  reclist
+%type   <A_exp>         let
+%type   <A_expList>     arglist
+%type   <A_decList>     decs
+%type   <A_dec>         dec
+%type   <A_var>         lvalue
+%type   <A_expList>     explist
+%type   <A_exp>         cond
+%type   <A_dec>	 tydec
+%type   <A_ty>          ty
+%type   <A_fieldList>   tyfields
+%type   <A_field>       tyfield
+%type   <A_dec>         vardec
+%type   <sval>     	 id
+%type   <A_dec>      	 fundec
+
+//%type   <lval>          lval
+
+
 
 %nonassoc LOW
 %nonassoc THEN DO TYPE FUNCTION ID
@@ -48,12 +110,12 @@ void yyerror(char *s)
 root:           /* empty */                   {printf("\n Programa vazio");}
                 | exp				{arv.ini = $1;}
 
-exp:              INT                       	{$$ = A_IntExp(0, atoi($1));}
+exp:              INT                       	{$$ = A_IntExp(0, $1);}
                 | STRING			{$$ = A_StringExp(0, $1);}
                 | NIL				{$$ = A_NilExp(0);}
                 | lvalue			{$$ = A_VarExp(0, $1);}
                 | lvalue ASSIGN exp		{$$ = A_AssignExp(0, $1, $3);}
-                | LPAREN explist RPAREN	{$$ = $1;}
+                | LPAREN explist RPAREN	{$$ = A_SeqExp(0, $2);}
                 | cond			    	{$$ = $1;}
                 | let				{$$ = $1;}
                 | exp OR exp			{$$ = A_OpExp(0, A_orOp, $1, $3);}
@@ -66,14 +128,14 @@ exp:              INT                       	{$$ = A_IntExp(0, atoi($1));}
                 | exp MINUS exp		{$$ = A_OpExp(0, A_minusOp, $1, $3);}
                 | exp TIMES exp		{$$ = A_OpExp(0, A_timesOp, $1, $3);}
                 | exp DIVIDE exp		{$$ = A_OpExp(0, A_divideOp, $1, $3);}
-                | MINUS exp %prec UMINUS	{$$ = A_OpExp(0, A_minusOp, 0, $2);}
+                | MINUS exp %prec UMINUS	{$$ = A_OpExp(0, A_minusOp, NULL, $2);}
                 | exp EQ exp			{$$ = A_OpExp(0, A_eqOp, $1, $3);}
                 | exp NEQ exp			{$$ = A_OpExp(0, A_neqOp, $1, $3);}
-                | id LPAREN arglist RPAREN	{$$ = A_CallExp(0, $1, $3);}
-                | id LPAREN RPAREN		{$$ = A_CallExp(0, $1, NULL);}
-                | id LBRACK exp RBRACK OF exp	{$$ = A_ArrayExp(0, S_Symbol($1), $3, $6);}			//PENDENTE;
+                | id LPAREN arglist RPAREN	{$$ = A_CallExp((A_pos) 0, S_Symbol($1), $3);}
+                | id LPAREN RPAREN		{$$ = A_CallExp((A_pos) 0, S_Symbol($1), NULL);}
+                | id LBRACK exp RBRACK OF exp	{$$ = A_ArrayExp(0, S_Symbol($1), $3, $6);}			
                 | id LBRACE reclist RBRACE	{$$ = A_RecordExp(0, S_Symbol($1), $3);}
-                | id LBRACE RBRACE		{$$ = A_RecordExp(0, S_Symbol($1), NULL);}			//
+                | id LBRACE RBRACE		{$$ = A_RecordExp(0, S_Symbol($1), NULL);}			
                 | BREAK			{$$ = A_BreakExp(0);}
                 ;
 
@@ -93,13 +155,13 @@ decs:           dec				{$$ = A_DecList($1, NULL);}
 		 | dec decs			{$$ = A_DecList($1, $2);}
                 ;
 
-dec:              tydec 			{$$ = A_TypeDec(0, A_NametyList($1, NULL));}
-                | vardec			{$$ = A_VarDec(0, NULL, NULL, A_ExpList($1, NULL));}
-                | fundec			{$$ = A_FunctionDec(0, A_FundecList($1, NULL));}
+dec:              tydec 			{$$ = $1;}
+                | vardec			{$$ = $1;}
+                | fundec			{$$ = $1;}
                 ;
 
 lvalue:           id %prec LOW                      {$$ = A_SimpleVar(0, S_Symbol($1));}
-                | id LBRACK exp RBRACK 		{$$ = A_SubscriptVar(0, $1, $3);}
+                | id LBRACK exp RBRACK 		{$$ = A_SubscriptVar(0, A_SimpleVar(0, S_Symbol($1)), $3);}
                 | lvalue LBRACK exp RBRACK		{$$ = A_SubscriptVar(0, $1, $3);}
                 | lvalue DOT id			{$$ = A_FieldVar(0, $1, S_Symbol($3));}
                 ;
@@ -112,34 +174,34 @@ explist:		/* empty */			{$$ = NULL;}
 cond:             IF exp THEN exp ELSE exp			{$$ = A_IfExp(0, $2, $4, $6);}
                 | IF exp THEN exp				{$$ = A_IfExp(0, $2, $4, NULL);}
                 | WHILE exp DO exp				{$$ = A_WhileExp(0, $2, $4);}
-                | FOR id ASSIGN exp TO exp DO exp		{$$ = A_ForExp(0, $2, $4, $6, $8);}
+                | FOR id ASSIGN exp TO exp DO exp		{$$ = A_ForExp(0, S_Symbol($2), $4, $6, $8);}
                 ;
 
-tydec:            TYPE id EQ ty				{$$ = A_TypeDec(0, A_NametyList($2, $4));}
+tydec:            TYPE id EQ ty				{$$ = A_TypeDec(0, A_NametyList(A_Namety(S_Symbol($2), $4), NULL));}
                 ;
 
 ty:               id						{$$ = A_NameTy(0, S_Symbol($1));}
-                | LBRACE tyfields RBRACE			{$$ = A_EfieldList(NULL, $2);}
+                | LBRACE tyfields RBRACE			{$$ = A_RecordTy(0, $2);}
                 | ARRAY OF id					{$$ = A_ArrayTy(0, S_Symbol($3));}
                 ;
 
 tyfields:       /* empty */					{$$ = NULL;}
-                | tyfield					{$$ = A_EfieldList($1, NULL);}
-                | tyfield COMMA tyfields			{$$ = A_EfieldList($1, $3);}
+                | tyfield					{$$ = A_FieldList($1, NULL);}
+                | tyfield COMMA tyfields			{$$ = A_FieldList($1, $3);}
                 ;
 
-tyfield:          id COLON id					{$$ = A_Efield(S_Symbol($1), $3);}
+tyfield:          id COLON id					{$$ = A_Field(0, S_Symbol($1), S_Symbol($3));}
                 ;
 
-vardec:           VAR id ASSIGN exp				{$$ = A_VarExp(0, A_SubscriptVar(0, $2, $4));}
-                | VAR id COLON id ASSIGN exp			{$$ = A_VarExp(0, A_VarDec(0, $2, $4, $6));}
+vardec:           VAR id ASSIGN exp				{$$ = A_VarDec(0, S_Symbol($2), NULL, $4);}
+                | VAR id COLON id ASSIGN exp			{$$ = A_VarDec(0, S_Symbol($2), S_Symbol($4), $6);}
                 ;
 
 id:               ID						{$$ = $1;}
                 ;
 
-fundec:           FUNCTION id LPAREN tyfields RPAREN EQ exp	{A_Fundec(0, S_Symbol($2), A_EfieldList(NULL, $4), NULL, $7);}
-                | FUNCTION id LPAREN tyfields RPAREN COLON id EQ exp	{A_Fundec(0, S_Symbol($2), A_EfieldList(NULL, $4), S_Symbol(), $9);}
+fundec:           FUNCTION id LPAREN tyfields RPAREN EQ exp	{$$ = A_FunctionDec(0, A_FundecList( A_Fundec(0, S_Symbol($2), $4, NULL, $7), NULL));}
+                | FUNCTION id LPAREN tyfields RPAREN COLON id EQ exp	{$$ = A_FunctionDec(0, A_FundecList( A_Fundec(0, S_Symbol($2), $4, S_Symbol($7), $9), NULL));}
                 ;
                 
                 

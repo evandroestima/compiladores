@@ -8,7 +8,6 @@
 #include "ast.h"  /* abstract syntax data structures */
 
 Arvore arv;
-char *aux;
 
 A_var A_SimpleVar(A_pos pos, S_symbol sym)
 {A_var p = checked_malloc(sizeof(*p));
@@ -60,7 +59,7 @@ A_exp A_IntExp(A_pos pos, int i)
  return p;
 }
 
-A_exp A_StringExp(A_pos pos, string s)
+A_exp A_StringExp(A_pos pos, char* s)
 {A_exp p = checked_malloc(sizeof(*p));
  p->kind=A_stringExp;
  p->pos=pos;
@@ -151,7 +150,7 @@ A_exp A_BreakExp(A_pos pos)
  return p;
 }
 
-A_exp A_LetExp(A_pos pos, A_decList decs, A_exp body)
+A_exp A_LetExp(A_pos pos, A_decList decs, A_expList body)
 {A_exp p = checked_malloc(sizeof(*p));
  p->kind=A_letExp;
  p->pos=pos;
