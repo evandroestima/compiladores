@@ -6,6 +6,7 @@
 #include "tiger.tab.h"
 #include "ast.h"
 #include "prabsyn.h"
+#include "semantic.h"
 
 YYSTYPE yylval;
 
@@ -58,6 +59,16 @@ int main(int argc, char **argv) {
  parse(argv[1]);
  pr_exp(stdout, arv.ini, 0);
  printf("\n\n");
+ 
+ venv = S_empty();
+ tenv = S_empty();
+ 
+ S_beginScope(tenv);
+ S_enter(tenv, S_Symbol("int"), Ty_Int());
+ S_enter(tenv, S_Symbol("string"), Ty_String());
+ 
+ transExp(arv.ini);
+ printf("\n\n SE FUDEU!!!!!\n");
  
  return 0;
 }

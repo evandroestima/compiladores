@@ -1,3 +1,4 @@
+#pragma once
 /*
  * symbol.h - Symbols and symbol-tables
  *
